@@ -1,6 +1,6 @@
-# Solidity Ethereum smart contract starter
+# BWL metadata bridge smart-contract
 
-Heavily influenced by the [Big Whale Labs repos](https://github.com/BigWhaleLabs).
+Cross chain contract for fetching and storing tokens metadata
 
 ## Usage
 
