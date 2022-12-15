@@ -1,5 +1,11 @@
 import { ethers, run } from 'hardhat'
 import { utils } from 'ethers'
+import { version } from '../package.json'
+import prompt from 'prompt'
+
+const regexes = {
+  ethereumAddress: /^0x[a-fA-F0-9]{40}$/,
+}
 
 async function main() {
   const [deployer] = await ethers.getSigners()
@@ -21,11 +27,24 @@ async function main() {
   } as { [chainId: number]: string }
   const chainName = chains[chainId]
 
-  const contractName = 'MyERC721'
-  const contractSymbol = 'MYERC721'
+  const contractName = 'ContractMetadataLedger'
   console.log(`Deploying ${contractName}...`)
+  const { lzEndpoint, destChainId } = await prompt.get({
+    properties: {
+      lzEndpoint: {
+        required: true,
+        pattern: regexes.ethereumAddress,
+        description: 'LayerZero endpoint address',
+      },
+      destChainId: {
+        required: true,
+        type: 'string',
+        description: 'LayerZero destination chain ID',
+      },
+    },
+  })
   const Contract = await ethers.getContractFactory(contractName)
-  const contract = await Contract.deploy(contractName, contractSymbol)
+  const contract = await Contract.deploy(lzEndpoint, destChainId, version)
 
   console.log(
     'Deploy tx gas price:',
@@ -47,7 +66,7 @@ async function main() {
   try {
     await run('verify:verify', {
       address,
-      constructorArguments: [contractName, contractSymbol],
+      constructorArguments: [lzEndpoint, destChainId, version],
     })
   } catch (err) {
     console.log(
