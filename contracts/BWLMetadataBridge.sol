@@ -63,7 +63,7 @@ import "@big-whale-labs/versioned-contract/contracts/Versioned.sol";
 import "@layerzerolabs/solidity-examples/contracts/lzApp/NonblockingLzApp.sol";
 import "@openzeppelin/contracts/token/ERC721/extensions/IERC721Metadata.sol";
 
-contract ContractMetadataLedger is NonblockingLzApp, Versioned {
+contract BWLMetadataBridge is NonblockingLzApp, Versioned {
   // State
   uint16 destChainId;
   mapping(address => Metadata) public contractsMetadata;

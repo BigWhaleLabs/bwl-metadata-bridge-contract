@@ -27,7 +27,7 @@ async function main() {
   } as { [chainId: number]: string }
   const chainName = chains[chainId]
 
-  const contractName = 'ContractMetadataLedger'
+  const contractName = 'BWLMetadataBridge'
   console.log(`Deploying ${contractName}...`)
   const { lzEndpoint, destChainId } = await prompt.get({
     properties: {
