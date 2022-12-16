@@ -36,6 +36,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@big-whale-labs/bwl-metadata-bridge-contract@workspace:."
   dependencies:
+    "@big-whale-labs/constants": ^0.1.39
     "@big-whale-labs/versioned-contract": ^1.0.2
     "@ethersproject/providers": ^5.7.2
     "@layerzerolabs/solidity-examples": ^0.0.6
@@ -77,6 +78,13 @@ __metadata:
     typescript: ^4.9.4
   languageName: unknown
   linkType: soft
+
+"@big-whale-labs/constants@npm:^0.1.39":
+  version: 0.1.39
+  resolution: "@big-whale-labs/constants@npm:0.1.39"
+  checksum: 69807bda7e9ffb4561d1adb9fb62d34257b3099c1d52131adc55e4b10a859135200bc22ce8a80bce28a584ebba76e4c4f6254988415fbbddb8ad8cb20573b742
+  languageName: node
+  linkType: hard
 
 "@big-whale-labs/versioned-contract@npm:^1.0.2":
   version: 1.0.2
