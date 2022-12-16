@@ -101,7 +101,7 @@ contract BWLMetadataBridge is NonblockingLzApp, Versioned {
     emit StoreMetadata(tokenAddress, metadata.name(), metadata.symbol());
   }
 
-  function send(address _address) public payable {
+  function send(address _address) external payable {
     bytes memory payload = abi.encode(_address);
     _lzSend(
       destChainId,
@@ -113,7 +113,7 @@ contract BWLMetadataBridge is NonblockingLzApp, Versioned {
     );
   }
 
-  function trustAddress(address _otherContract) public onlyOwner {
+  function trustAddress(address _otherContract) external onlyOwner {
     trustedRemoteLookup[destChainId] = abi.encodePacked(
       _otherContract,
       address(this)
