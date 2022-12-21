@@ -2,7 +2,8 @@ import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers'
 import { waffle } from 'hardhat'
 
 export function serializeMetadata(
-  metadata: [string, string] & {
+  metadata: [string, string, string] & {
+    tokenAddress: string
     name: string
     symbol: string
   }
