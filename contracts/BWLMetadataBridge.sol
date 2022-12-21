@@ -67,15 +67,22 @@ contract BWLMetadataBridge is NonblockingLzApp, Versioned {
   // State
   uint16 destChainId;
   mapping(address => Metadata) public contractsMetadata;
-
   // Structs
   struct Metadata {
+    address tokenAddress;
     string name;
     string symbol;
   }
-
+  // Enums
+  enum MessageType {
+    REQUEST,
+    RESPONSE
+  }
   // Events
   event StoreMetadata(address tokenAddress, string name, string symbol);
+  event SendMetadata(address tokenAddress, string name, string symbol);
+  // Errors
+  error TokenDoesNotExist(address tokenAddress);
 
   constructor(
     address _lzEndpoint,
@@ -91,21 +98,46 @@ contract BWLMetadataBridge is NonblockingLzApp, Versioned {
     uint64,
     bytes memory _payload
   ) internal override {
-    address tokenAddress = abi.decode(_payload, (address));
-    IERC721Metadata metadata = IERC721Metadata(tokenAddress);
-    contractsMetadata[tokenAddress] = Metadata(
-      metadata.name(),
-      metadata.symbol()
+    (MessageType messageType, address tokenAddress) = abi.decode(
+      _payload,
+      (MessageType, address)
     );
+    if (messageType == MessageType.REQUEST) {
+      IERC721Metadata metadata = IERC721Metadata(tokenAddress);
+      // Check metadata existence
+      if (
+        bytes(metadata.name()).length == 0 &&
+        bytes(metadata.symbol()).length == 0
+      ) revert TokenDoesNotExist(tokenAddress);
+      // Send metadata to the requested contract
+      _sendMetadata(Metadata(tokenAddress, metadata.name(), metadata.symbol()));
+      emit SendMetadata(tokenAddress, metadata.name(), metadata.symbol());
+    } else if (messageType == MessageType.RESPONSE) {
+      (, Metadata memory metadata) = abi.decode(
+        _payload,
+        (MessageType, Metadata)
+      );
 
-    emit StoreMetadata(tokenAddress, metadata.name(), metadata.symbol());
+      contractsMetadata[metadata.tokenAddress] = metadata;
+      emit StoreMetadata(metadata.tokenAddress, metadata.name, metadata.symbol);
+    }
   }
 
-  function send(address _address) external payable {
-    bytes memory payload = abi.encode(_address);
+  function _sendMetadata(Metadata memory metadata) public payable {
     _lzSend(
       destChainId,
-      payload,
+      abi.encode(MessageType.RESPONSE, metadata), // Encoded metadata payload
+      payable(msg.sender),
+      address(0x0),
+      bytes(""),
+      msg.value
+    );
+  }
+
+  function requestMetadata(address _address) external payable {
+    _lzSend(
+      destChainId,
+      abi.encode(MessageType.REQUEST, _address), // Encoded metadata payload
       payable(msg.sender),
       address(0x0),
       bytes(""),
