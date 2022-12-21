@@ -65,7 +65,7 @@ import "@openzeppelin/contracts/token/ERC721/extensions/IERC721Metadata.sol";
 
 contract BWLMetadataBridge is NonblockingLzApp, Versioned {
   // State
-  uint16 destChainId;
+  uint16 public destChainId;
   mapping(address => Metadata) public contractsMetadata;
   // Structs
   struct Metadata {
