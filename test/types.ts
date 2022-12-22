@@ -15,9 +15,12 @@ declare module 'mocha' {
     contractB: BWLMetadataBridge
     // Mock contracts
     fakeERC721: MockContract
-    lzEndpointMock: LZEndpointMock
+    layerZeroEndpointMockSrc: LZEndpointMock
+    layerZeroEndpointMockDst: LZEndpointMock
     // Contracts metadata
     chainId: number
+    chainIdDst: number
+    chainIdSrc: number
     // Signers
     accounts: SignerWithAddress[]
     owner: SignerWithAddress

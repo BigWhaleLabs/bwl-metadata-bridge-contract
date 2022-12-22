@@ -9,12 +9,15 @@ describe('BWLMetadataBridge contract tests', () => {
     this.owner = this.accounts[0]
     this.user = this.accounts[1]
     this.chainId = 123
+    this.chainIdSrc = 1
+    this.chainIdDst = 2
 
     this.factory = await ethers.getContractFactory('BWLMetadataBridge')
-    const LayerZeroEndpointMock = await ethers.getContractFactory(
-      'LZEndpointMock'
-    )
-    this.lzEndpointMock = await LayerZeroEndpointMock.deploy(this.chainId)
+    // Create a LayerZero Endpoint mock
+    const LZEndpointMock = await ethers.getContractFactory('LZEndpointMock')
+    this.layerZeroEndpointMockSrc = await LZEndpointMock.deploy(this.chainIdSrc)
+    this.layerZeroEndpointMockDst = await LZEndpointMock.deploy(this.chainIdDst)
+
     // Mock ERC721 token
     this.fakeERC721 = await getFakeERC721(this.owner)
     await this.fakeERC721.mock.name.returns('MyERC721')
@@ -23,26 +26,26 @@ describe('BWLMetadataBridge contract tests', () => {
   beforeEach(async function () {
     // Deploy contracts
     this.contractA = await this.factory.deploy(
-      this.lzEndpointMock.address,
-      this.chainId,
+      this.layerZeroEndpointMockSrc.address,
+      this.chainIdDst,
       version
     )
     this.contractB = await this.factory.deploy(
-      this.lzEndpointMock.address,
-      this.chainId,
+      this.layerZeroEndpointMockDst.address,
+      this.chainIdSrc,
       version
     )
 
-    await this.lzEndpointMock.setDestLzEndpoint(
-      this.contractA.address,
-      this.lzEndpointMock.address
-    )
-    await this.lzEndpointMock.setDestLzEndpoint(
+    await this.layerZeroEndpointMockSrc.setDestLzEndpoint(
       this.contractB.address,
-      this.lzEndpointMock.address
+      this.layerZeroEndpointMockDst.address
+    )
+    await this.layerZeroEndpointMockDst.setDestLzEndpoint(
+      this.contractA.address,
+      this.layerZeroEndpointMockSrc.address
     )
 
-    // Set each contracts source address so it can send to each other
+    // // Set each contracts source address so it can send to each other
     await this.contractA.trustAddress(this.contractB.address)
     await this.contractB.trustAddress(this.contractA.address)
   })
@@ -56,7 +59,7 @@ describe('BWLMetadataBridge contract tests', () => {
   describe('Owner-only calls from non-owner', function () {
     beforeEach(async function () {
       this.contractA = await this.factory.deploy(
-        this.lzEndpointMock.address,
+        this.layerZeroEndpointMockSrc.address,
         this.chainId,
         version
       )
@@ -68,7 +71,7 @@ describe('BWLMetadataBridge contract tests', () => {
     })
     it('should not be able to call setVerifierContract', async function () {
       await expect(
-        this.contractA.trustAddress(this.lzEndpointMock.address)
+        this.contractA.trustAddress(this.layerZeroEndpointMockSrc.address)
       ).to.be.revertedWith('Ownable: caller is not the owner')
     })
   })
@@ -78,10 +81,12 @@ describe('BWLMetadataBridge contract tests', () => {
         name: 'MyERC721',
         symbol: 'ME7',
       }
-      await this.contractA.send(this.fakeERC721.address, {
+
+      await this.contractA.requestMetadata(this.fakeERC721.address, {
         value: ethers.utils.parseEther('0.5'),
       })
-      const metadata = await this.contractB.contractsMetadata(
+
+      const metadata = await this.contractA.contractsMetadata(
         this.fakeERC721.address
       )
       const serializedMetadata = serializeMetadata(metadata)
