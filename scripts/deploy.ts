@@ -1,3 +1,4 @@
+import { GSN_FORWARDER_CONTRACT_ADDRESS } from '@big-whale-labs/constants'
 import { ethers, run } from 'hardhat'
 import { utils } from 'ethers'
 import { version } from '../package.json'
@@ -44,7 +45,12 @@ async function main() {
     },
   })
   const Contract = await ethers.getContractFactory(contractName)
-  const contract = await Contract.deploy(lzEndpoint, destChainId, version)
+  const contract = await Contract.deploy(
+    lzEndpoint,
+    destChainId,
+    GSN_FORWARDER_CONTRACT_ADDRESS,
+    version
+  )
 
   console.log(
     'Deploy tx gas price:',
@@ -66,7 +72,12 @@ async function main() {
   try {
     await run('verify:verify', {
       address,
-      constructorArguments: [lzEndpoint, destChainId, version],
+      constructorArguments: [
+        lzEndpoint,
+        destChainId,
+        GSN_FORWARDER_CONTRACT_ADDRESS,
+        version,
+      ],
     })
   } catch (err) {
     console.log(

@@ -1,7 +1,7 @@
 import { ethers } from 'hardhat'
 import { expect } from 'chai'
+import { getFakeERC721, serializeMetadata, zeroAddress } from './utils'
 import { version } from '../package.json'
-import getFakeERC721, { serializeMetadata } from './utils'
 
 describe('BWLMetadataBridge contract tests', () => {
   before(async function () {
@@ -28,11 +28,13 @@ describe('BWLMetadataBridge contract tests', () => {
     this.contractA = await this.factory.deploy(
       this.layerZeroEndpointMockSrc.address,
       this.chainIdDst,
+      zeroAddress,
       version
     )
     this.contractB = await this.factory.deploy(
       this.layerZeroEndpointMockDst.address,
       this.chainIdSrc,
+      zeroAddress,
       version
     )
 
@@ -61,6 +63,7 @@ describe('BWLMetadataBridge contract tests', () => {
       this.contractA = await this.factory.deploy(
         this.layerZeroEndpointMockSrc.address,
         this.chainId,
+        zeroAddress,
         version
       )
       await this.contractA.deployed()

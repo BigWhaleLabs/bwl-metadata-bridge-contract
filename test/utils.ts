@@ -1,6 +1,8 @@
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers'
 import { waffle } from 'hardhat'
 
+export const zeroAddress = '0x0000000000000000000000000000000000000000'
+
 export function serializeMetadata(
   metadata: [string, string, string] & {
     tokenAddress: string
@@ -14,7 +16,7 @@ export function serializeMetadata(
   }
 }
 
-export default async function getFakeERC721(signer: SignerWithAddress) {
+export async function getFakeERC721(signer: SignerWithAddress) {
   return await waffle.deployMockContract(signer, [
     {
       inputs: [],
