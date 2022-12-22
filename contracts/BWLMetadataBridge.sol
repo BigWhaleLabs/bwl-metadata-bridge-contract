@@ -62,8 +62,9 @@ pragma solidity >=0.8.17;
 import "@big-whale-labs/versioned-contract/contracts/Versioned.sol";
 import "@layerzerolabs/solidity-examples/contracts/lzApp/NonblockingLzApp.sol";
 import "@openzeppelin/contracts/token/ERC721/extensions/IERC721Metadata.sol";
+import "@opengsn/contracts/src/ERC2771Recipient.sol";
 
-contract BWLMetadataBridge is NonblockingLzApp, Versioned {
+contract BWLMetadataBridge is NonblockingLzApp, ERC2771Recipient, Versioned {
   // State
   uint16 public destChainId;
   mapping(address => Metadata) public contractsMetadata;
@@ -87,9 +88,11 @@ contract BWLMetadataBridge is NonblockingLzApp, Versioned {
   constructor(
     address _lzEndpoint,
     uint16 _destChainId,
+    address _forwarder,
     string memory _version
   ) NonblockingLzApp(_lzEndpoint) Versioned(_version) {
     destChainId = _destChainId;
+    _setTrustedForwarder(_forwarder);
   }
 
   function _nonblockingLzReceive(
@@ -127,7 +130,7 @@ contract BWLMetadataBridge is NonblockingLzApp, Versioned {
     _lzSend(
       destChainId,
       abi.encode(MessageType.RESPONSE, metadata), // Encoded metadata payload
-      payable(msg.sender),
+      payable(_msgSender()),
       address(0x0),
       bytes(""),
       msg.value
@@ -138,7 +141,7 @@ contract BWLMetadataBridge is NonblockingLzApp, Versioned {
     _lzSend(
       destChainId,
       abi.encode(MessageType.REQUEST, _address), // Encoded metadata payload
-      payable(msg.sender),
+      payable(_msgSender()),
       address(0x0),
       bytes(""),
       msg.value
@@ -150,5 +153,23 @@ contract BWLMetadataBridge is NonblockingLzApp, Versioned {
       _otherContract,
       address(this)
     );
+  }
+
+  function _msgSender()
+    internal
+    view
+    override(Context, ERC2771Recipient)
+    returns (address sender)
+  {
+    sender = ERC2771Recipient._msgSender();
+  }
+
+  function _msgData()
+    internal
+    view
+    override(Context, ERC2771Recipient)
+    returns (bytes calldata ret)
+  {
+    return ERC2771Recipient._msgData();
   }
 }
