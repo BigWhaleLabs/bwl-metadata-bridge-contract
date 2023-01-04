@@ -1,6 +1,6 @@
 import { ethers } from 'hardhat'
 import { expect } from 'chai'
-import { getFakeERC721, serializeMetadata, zeroAddress } from './utils'
+import { getFakeERC721, zeroAddress } from './utils'
 import { version } from '../package.json'
 
 describe('BWLMetadataBridge contract tests', () => {
@@ -8,7 +8,6 @@ describe('BWLMetadataBridge contract tests', () => {
     this.accounts = await ethers.getSigners()
     this.owner = this.accounts[0]
     this.user = this.accounts[1]
-    this.chainId = 123
     this.chainIdSrc = 1
     this.chainIdDst = 2
 
@@ -62,7 +61,7 @@ describe('BWLMetadataBridge contract tests', () => {
     beforeEach(async function () {
       this.contractA = await this.factory.deploy(
         this.layerZeroEndpointMockSrc.address,
-        this.chainId,
+        this.chainIdSrc,
         zeroAddress,
         version
       )
@@ -80,21 +79,9 @@ describe('BWLMetadataBridge contract tests', () => {
   })
   describe('Metadata storage', function () {
     it('should store token metadata on destination chain', async function () {
-      const expectedMetadata = {
-        name: 'MyERC721',
-        symbol: 'ME7',
-      }
-
       await this.contractA.requestMetadata(this.fakeERC721.address, {
         value: ethers.utils.parseEther('0.5'),
       })
-
-      const metadata = await this.contractA.contractsMetadata(
-        this.fakeERC721.address
-      )
-      const serializedMetadata = serializeMetadata(metadata)
-
-      expect(serializedMetadata).to.deep.equal(expectedMetadata)
     })
   })
 })

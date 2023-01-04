@@ -3,19 +3,6 @@ import { waffle } from 'hardhat'
 
 export const zeroAddress = '0x0000000000000000000000000000000000000000'
 
-export function serializeMetadata(
-  metadata: [string, string, string] & {
-    tokenAddress: string
-    name: string
-    symbol: string
-  }
-) {
-  return {
-    name: metadata.name,
-    symbol: metadata.symbol,
-  }
-}
-
 export async function getFakeERC721(signer: SignerWithAddress) {
   return await waffle.deployMockContract(signer, [
     {
