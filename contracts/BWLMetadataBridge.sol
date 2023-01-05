@@ -60,99 +60,54 @@
 pragma solidity >=0.8.17;
 
 import "@big-whale-labs/versioned-contract/contracts/Versioned.sol";
-import "@layerzerolabs/solidity-examples/contracts/lzApp/NonblockingLzApp.sol";
-import "@openzeppelin/contracts/token/ERC721/extensions/IERC721Metadata.sol";
+import "@openzeppelin/contracts/access/Ownable.sol";
 import "@opengsn/contracts/src/ERC2771Recipient.sol";
 
-contract BWLMetadataBridge is NonblockingLzApp, ERC2771Recipient, Versioned {
+contract BWLMetadataLedger is ERC2771Recipient, Ownable, Versioned {
   // State
-  uint16 public destChainId;
-  mapping(address => Metadata) public contractsMetadata;
+  mapping(uint16 => mapping(address => Metadata)) public contractsMetadata;
   // Structs
   struct Metadata {
     address tokenAddress;
     string name;
     string symbol;
   }
-  // Enums
-  enum MessageType {
-    REQUEST,
-    RESPONSE
-  }
   // Events
-  event StoreMetadata(address tokenAddress, string name, string symbol);
-  event SendMetadata(address tokenAddress, string name, string symbol);
+  event StoreMetadata(
+    uint16 chainId,
+    address tokenAddress,
+    string name,
+    string symbol
+  );
+  event RequestMetadata(uint16 chainId, address tokenAddress);
   // Errors
-  error TokenDoesNotExist(address tokenAddress);
+  error TokenDoesNotExist(uint16 chainId, address tokenAddress);
 
-  constructor(
-    address _lzEndpoint,
-    uint16 _destChainId,
-    address _forwarder,
-    string memory _version
-  ) NonblockingLzApp(_lzEndpoint) Versioned(_version) {
-    destChainId = _destChainId;
+  constructor(address _forwarder, string memory _version) Versioned(_version) {
     _setTrustedForwarder(_forwarder);
   }
 
-  function _nonblockingLzReceive(
-    uint16,
-    bytes memory,
-    uint64,
-    bytes memory _payload
-  ) internal override {
-    (MessageType messageType, address tokenAddress) = abi.decode(
-      _payload,
-      (MessageType, address)
-    );
-    if (messageType == MessageType.REQUEST) {
-      IERC721Metadata metadata = IERC721Metadata(tokenAddress);
-      // Check metadata existence
-      if (
-        bytes(metadata.name()).length == 0 &&
-        bytes(metadata.symbol()).length == 0
-      ) revert TokenDoesNotExist(tokenAddress);
-      // Send metadata to the requested contract
-      _sendMetadata(Metadata(tokenAddress, metadata.name(), metadata.symbol()));
-      emit SendMetadata(tokenAddress, metadata.name(), metadata.symbol());
-    } else if (messageType == MessageType.RESPONSE) {
-      (, Metadata memory metadata) = abi.decode(
-        _payload,
-        (MessageType, Metadata)
-      );
-
-      contractsMetadata[metadata.tokenAddress] = metadata;
-      emit StoreMetadata(metadata.tokenAddress, metadata.name, metadata.symbol);
+  function requestMetadata(
+    uint16 chainId,
+    address tokenAddress
+  ) external returns (Metadata memory) {
+    Metadata memory metadata = contractsMetadata[chainId][tokenAddress];
+    if (metadata.tokenAddress == address(0)) {
+      emit RequestMetadata(chainId, tokenAddress);
+      revert TokenDoesNotExist(chainId, tokenAddress);
     }
+
+    return metadata;
   }
 
-  function _sendMetadata(Metadata memory metadata) public payable {
-    _lzSend(
-      destChainId,
-      abi.encode(MessageType.RESPONSE, metadata), // Encoded metadata payload
-      payable(_msgSender()),
-      address(0x0),
-      bytes(""),
-      msg.value
-    );
-  }
+  function storeMetadata(
+    uint16 chainId,
+    address tokenAddress,
+    Metadata memory metadata
+  ) external onlyOwner {
+    contractsMetadata[chainId][tokenAddress] = metadata;
 
-  function requestMetadata(address _address) external payable {
-    _lzSend(
-      destChainId,
-      abi.encode(MessageType.REQUEST, _address), // Encoded metadata payload
-      payable(_msgSender()),
-      address(0x0),
-      bytes(""),
-      msg.value
-    );
-  }
-
-  function trustAddress(address _otherContract) external onlyOwner {
-    trustedRemoteLookup[destChainId] = abi.encodePacked(
-      _otherContract,
-      address(this)
-    );
+    emit StoreMetadata(chainId, tokenAddress, metadata.name, metadata.symbol);
   }
 
   function _msgSender()
