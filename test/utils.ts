@@ -11,6 +11,7 @@ export function serializeMetadata(
   }
 ) {
   return {
+    tokenAddress: metadata.tokenAddress,
     name: metadata.name,
     symbol: metadata.symbol,
   }

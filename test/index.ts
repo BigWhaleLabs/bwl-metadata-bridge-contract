@@ -3,20 +3,13 @@ import { expect } from 'chai'
 import { getFakeERC721, serializeMetadata, zeroAddress } from './utils'
 import { version } from '../package.json'
 
-describe('BWLMetadataBridge contract tests', () => {
+describe('BWLMetadataLedger contract tests', () => {
   before(async function () {
     this.accounts = await ethers.getSigners()
     this.owner = this.accounts[0]
     this.user = this.accounts[1]
-    this.chainId = 123
-    this.chainIdSrc = 1
-    this.chainIdDst = 2
 
-    this.factory = await ethers.getContractFactory('BWLMetadataBridge')
-    // Create a LayerZero Endpoint mock
-    const LZEndpointMock = await ethers.getContractFactory('LZEndpointMock')
-    this.layerZeroEndpointMockSrc = await LZEndpointMock.deploy(this.chainIdSrc)
-    this.layerZeroEndpointMockDst = await LZEndpointMock.deploy(this.chainIdDst)
+    this.factory = await ethers.getContractFactory('BWLMetadataLedger')
 
     // Mock ERC721 token
     this.fakeERC721 = await getFakeERC721(this.owner)
@@ -25,76 +18,46 @@ describe('BWLMetadataBridge contract tests', () => {
   })
   beforeEach(async function () {
     // Deploy contracts
-    this.contractA = await this.factory.deploy(
-      this.layerZeroEndpointMockSrc.address,
-      this.chainIdDst,
-      zeroAddress,
-      version
-    )
-    this.contractB = await this.factory.deploy(
-      this.layerZeroEndpointMockDst.address,
-      this.chainIdSrc,
-      zeroAddress,
-      version
-    )
-
-    await this.layerZeroEndpointMockSrc.setDestLzEndpoint(
-      this.contractB.address,
-      this.layerZeroEndpointMockDst.address
-    )
-    await this.layerZeroEndpointMockDst.setDestLzEndpoint(
-      this.contractA.address,
-      this.layerZeroEndpointMockSrc.address
-    )
-
-    // // Set each contracts source address so it can send to each other
-    await this.contractA.trustAddress(this.contractB.address)
-    await this.contractB.trustAddress(this.contractA.address)
+    this.contract = await this.factory.deploy(zeroAddress, version)
   })
 
   describe('Constructor', function () {
     it('should deploy the contract with the correct fields', async function () {
-      expect(await this.contractA.version()).to.equal(version)
-      expect(await this.contractB.version()).to.equal(version)
+      expect(await this.contract.version()).to.equal(version)
     })
   })
   describe('Owner-only calls from non-owner', function () {
     beforeEach(async function () {
-      this.contractA = await this.factory.deploy(
-        this.layerZeroEndpointMockSrc.address,
-        this.chainId,
-        zeroAddress,
-        version
-      )
-      await this.contractA.deployed()
-      await this.contractA.transferOwnership(this.user.address)
+      this.contract = await this.factory.deploy(zeroAddress, version)
+      await this.contract.deployed()
+      await this.contract.transferOwnership(this.user.address)
     })
     it('should have the correct owner', async function () {
-      expect(await this.contractA.owner()).to.equal(this.user.address)
-    })
-    it('should not be able to call setVerifierContract', async function () {
-      await expect(
-        this.contractA.trustAddress(this.layerZeroEndpointMockSrc.address)
-      ).to.be.revertedWith('Ownable: caller is not the owner')
+      expect(await this.contract.owner()).to.equal(this.user.address)
     })
   })
   describe('Metadata storage', function () {
-    it('should store token metadata on destination chain', async function () {
+    it('should store metadata', async function () {
       const expectedMetadata = {
+        tokenAddress: this.fakeERC721.address,
         name: 'MyERC721',
         symbol: 'ME7',
       }
-
-      await this.contractA.requestMetadata(this.fakeERC721.address, {
-        value: ethers.utils.parseEther('0.5'),
+      await this.contract.storeMetadata(1, this.fakeERC721.address, {
+        tokenAddress: expectedMetadata.tokenAddress,
+        name: expectedMetadata.name,
+        symbol: expectedMetadata.symbol,
       })
-
-      const metadata = await this.contractA.contractsMetadata(
-        this.fakeERC721.address
+      const metadata = serializeMetadata(
+        await this.contract.contractsMetadata(1, this.fakeERC721.address)
       )
-      const serializedMetadata = serializeMetadata(metadata)
-
-      expect(serializedMetadata).to.deep.equal(expectedMetadata)
+      expect(metadata).to.deep.equal(metadata)
+    })
+    it('should fire request metadata event if metadata does not exist', async function () {
+      await expect(this.contract.requestMetadata(1, this.fakeERC721.address))
+        .to.emit(this.contract, 'RequestMetadata')
+        .withArgs(1, this.fakeERC721.address)
+        .to.revertedWith('TokenDoesNotExist')
     })
   })
 })
