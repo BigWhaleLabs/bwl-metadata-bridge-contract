@@ -57,7 +57,6 @@ describe('BWLMetadataLedger contract tests', () => {
       await expect(this.contract.requestMetadata(1, this.fakeERC721.address))
         .to.emit(this.contract, 'RequestMetadata')
         .withArgs(1, this.fakeERC721.address)
-        .to.revertedWith('TokenDoesNotExist')
     })
   })
 })
