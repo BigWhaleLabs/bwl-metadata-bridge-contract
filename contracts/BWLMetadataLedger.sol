@@ -80,8 +80,6 @@ contract BWLMetadataLedger is ERC2771Recipient, Ownable, Versioned {
     string symbol
   );
   event RequestMetadata(uint16 chainId, address tokenAddress);
-  // Errors
-  error TokenDoesNotExist(uint16 chainId, address tokenAddress);
 
   constructor(address _forwarder, string memory _version) Versioned(_version) {
     _setTrustedForwarder(_forwarder);
@@ -94,7 +92,6 @@ contract BWLMetadataLedger is ERC2771Recipient, Ownable, Versioned {
     Metadata memory metadata = contractsMetadata[chainId][tokenAddress];
     if (metadata.tokenAddress == address(0)) {
       emit RequestMetadata(chainId, tokenAddress);
-      revert TokenDoesNotExist(chainId, tokenAddress);
     }
 
     return metadata;
