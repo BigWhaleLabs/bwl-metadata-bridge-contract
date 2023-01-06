@@ -4,7 +4,7 @@ Cross chain contract for fetching and storing tokens metadata
 
 ## Usage
 
-1. Clone the repository with `git clone git@github.com:Borodutch/smart-contract-starter`
+1. Clone the repository with `git clone git@github.com:BigWhaleLabs/bwl-metadata-bridge-contract`
 2. Install the dependencies with `yarn`
 3. Add environment variables to your `.env` file
 4. Run the scripts below
