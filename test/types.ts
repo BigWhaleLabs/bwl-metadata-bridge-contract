@@ -1,7 +1,6 @@
 import type {
-  BWLMetadataBridge,
-  BWLMetadataBridge__factory,
-  LZEndpointMock,
+  BWLMetadataLedger,
+  BWLMetadataLedger__factory,
 } from '../typechain'
 import type { MockContract } from 'ethereum-waffle'
 import type { SignerWithAddress } from '@nomiclabs/hardhat-ethers/dist/src/signer-with-address'
@@ -9,18 +8,11 @@ import type { SignerWithAddress } from '@nomiclabs/hardhat-ethers/dist/src/signe
 declare module 'mocha' {
   export interface Context {
     // Facoriries for contracts
-    factory: BWLMetadataBridge__factory
+    factory: BWLMetadataLedger__factory
     // Contract instances
-    contractA: BWLMetadataBridge
-    contractB: BWLMetadataBridge
+    contract: BWLMetadataLedger
     // Mock contracts
     fakeERC721: MockContract
-    layerZeroEndpointMockSrc: LZEndpointMock
-    layerZeroEndpointMockDst: LZEndpointMock
-    // Contracts metadata
-    chainId: number
-    chainIdDst: number
-    chainIdSrc: number
     // Signers
     accounts: SignerWithAddress[]
     owner: SignerWithAddress

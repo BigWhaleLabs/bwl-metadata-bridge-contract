@@ -2,11 +2,6 @@ import { GSN_FORWARDER_CONTRACT_ADDRESS } from '@big-whale-labs/constants'
 import { ethers, run } from 'hardhat'
 import { utils } from 'ethers'
 import { version } from '../package.json'
-import prompt from 'prompt'
-
-const regexes = {
-  ethereumAddress: /^0x[a-fA-F0-9]{40}$/,
-}
 
 async function main() {
   const [deployer] = await ethers.getSigners()
@@ -28,26 +23,11 @@ async function main() {
   } as { [chainId: number]: string }
   const chainName = chains[chainId]
 
-  const contractName = 'BWLMetadataBridge'
+  const contractName = 'BWLMetadataLedger'
   console.log(`Deploying ${contractName}...`)
-  const { lzEndpoint, destChainId } = await prompt.get({
-    properties: {
-      lzEndpoint: {
-        required: true,
-        pattern: regexes.ethereumAddress,
-        description: 'LayerZero endpoint address',
-      },
-      destChainId: {
-        required: true,
-        type: 'string',
-        description: 'LayerZero destination chain ID',
-      },
-    },
-  })
+
   const Contract = await ethers.getContractFactory(contractName)
   const contract = await Contract.deploy(
-    lzEndpoint,
-    destChainId,
     GSN_FORWARDER_CONTRACT_ADDRESS,
     version
   )
@@ -72,12 +52,7 @@ async function main() {
   try {
     await run('verify:verify', {
       address,
-      constructorArguments: [
-        lzEndpoint,
-        destChainId,
-        GSN_FORWARDER_CONTRACT_ADDRESS,
-        version,
-      ],
+      constructorArguments: [GSN_FORWARDER_CONTRACT_ADDRESS, version],
     })
   } catch (err) {
     console.log(
