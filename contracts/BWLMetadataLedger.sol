@@ -65,7 +65,7 @@ import "@opengsn/contracts/src/ERC2771Recipient.sol";
 
 contract BWLMetadataLedger is ERC2771Recipient, Ownable, Versioned {
   // State
-  mapping(uint16 => mapping(address => Metadata)) public contractsMetadata;
+  mapping(uint256 => mapping(address => Metadata)) public contractsMetadata;
   // Structs
   struct Metadata {
     address tokenAddress;
@@ -74,19 +74,19 @@ contract BWLMetadataLedger is ERC2771Recipient, Ownable, Versioned {
   }
   // Events
   event StoreMetadata(
-    uint16 chainId,
+    uint256 chainId,
     address tokenAddress,
     string name,
     string symbol
   );
-  event RequestMetadata(uint16 chainId, address tokenAddress);
+  event RequestMetadata(uint256 chainId, address tokenAddress);
 
   constructor(address _forwarder, string memory _version) Versioned(_version) {
     _setTrustedForwarder(_forwarder);
   }
 
   function requestMetadata(
-    uint16 chainId,
+    uint256 chainId,
     address tokenAddress
   ) external returns (Metadata memory) {
     Metadata memory metadata = contractsMetadata[chainId][tokenAddress];
@@ -98,7 +98,7 @@ contract BWLMetadataLedger is ERC2771Recipient, Ownable, Versioned {
   }
 
   function storeMetadata(
-    uint16 chainId,
+    uint256 chainId,
     address tokenAddress,
     Metadata memory metadata
   ) external onlyOwner {
